@@ -1,3 +1,4 @@
+// codeVersion: 1.0.0
 import { spawnSync } from "node:child_process";
 
 const message =
