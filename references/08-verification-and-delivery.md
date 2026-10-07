@@ -36,8 +36,10 @@
 |---|---|---|
 | `__pycache__/`、`*.pyc`、`*.pyo` | 目录名/后缀 | 运行时生成物，非作者编写的技能内容 |
 | `.git/` | 目录名 | 版本控制元数据，读者无法从入口到达 |
+| `.gitignore`、`.gitattributes`、`.gitmodules`、`.gitkeep`、`.editorconfig` | 文件名 | 仓库/编辑器基建，描述的是"技能所在的那个仓库"，与 `.git/` 同理 |
 | `node_modules/`、`vendor/`、`third_party/` | 目录名 | 第三方依赖，其 README 与清单描述的是**别的项目**的布局 |
 | `.venv/`、`venv/`、`.cache/`、`dist-info/`、`egg-info/` 等构建缓存 | 目录名 | 同上，非技能内容 |
+| `.vscode/`、`.idea/`、`.vs/`、`.fleet/`、`.settings/` | 目录名 | 编辑器/IDE 配置，属于"打开技能的那个人"而非技能本身；正文无从指向，全部会变成孤儿 |
 | 工具脚本 | **角色**判定：位于 `scripts/`、`tools/`、`bin/` 下，扩展名属脚本类，且文件名含 `validate`/`check`/`lint`/`verify`/`audit`/`inspect`/`format` 之一 | 工具脚本由流程**调用**而非从正文**指向**，"无入口指针"是预期行为，不是孤儿 |
 
 工具脚本的豁免按**角色**而非固定文件名给定。早前版本硬编码 `scripts/validate_skill.py` 一个路径，脚本一旦改名（如 `validate-skill.py`）就立刻把自己报成孤儿，也无法覆盖第二个校验器；改为角色判定后这两种情况都正确。

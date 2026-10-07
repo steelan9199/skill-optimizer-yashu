@@ -114,11 +114,21 @@ NON_CONTENT_DIRS = frozenset({
     ".git", "node_modules", "vendor", "third_party", "__pycache__",
     ".venv", "venv", ".tox", ".mypy_cache", ".pytest_cache", ".cache",
     "dist-info", "egg-info",
+    # Editor / IDE project settings. They belong to whoever opened the skill in
+    # an editor, not to the skill: no prose can point at them, so every one of
+    # them would surface as an orphan and bury the real findings.
+    ".vscode", ".idea", ".vs", ".fleet", ".settings", ".history",
 })
 TOOLING_NAME_SEP_RE = re.compile(r"[-_.]")
 # Human-facing docs sit next to code by design and are not "orphans" in the sense
 # the rule cares about; they are excluded only when named as such.
 STANDALONE_NAME_RE = re.compile(r"^(?:license|notice|contributing|authors|maintainers)(?:\.\w+)?$", re.IGNORECASE)
+# Housekeeping for the repository a skill happens to live in. Same argument as
+# `.git/`: metadata about version control or the editor, not content any reader
+# can reach from the entry doc, so none of it is an orphan.
+REPO_CHROME_FILES = frozenset({
+    ".gitignore", ".gitattributes", ".gitmodules", ".gitkeep", ".editorconfig",
+})
 
 
 def is_tooling_script(rel: str) -> bool:
@@ -449,11 +459,12 @@ def scan_skill_files(root: Path) -> tuple[list[Path], list[str], list[str]]:
             return
         visited_dirs.add(resolved)
         # Directories that are not skill content at all. A `.git` directory holds
-        # dozens of internals no reader can reach from SKILL.md, and a bundled
+        # dozens of internals no reader can reach from SKILL.md, a bundled
         # `node_modules`/`vendor` tree is third-party code whose own READMEs and
-        # manifests point at *their* project layout — scanning them produced a
-        # flood of findings about packages the skill merely depends on. Skipping
-        # them keeps the report about the skill's own files.
+        # manifests point at *their* project layout, and `.vscode`/`.idea` hold
+        # the editor settings of whoever opened the skill. Scanning any of them
+        # produced a flood of findings about things that are not the skill.
+        # Skipping them keeps the report about the skill's own files.
         if Path(resolved).name in NON_CONTENT_DIRS:
             return
         try:
@@ -593,6 +604,11 @@ def validate(root: Path) -> dict[str, Any]:
         # Python bytecode caches are generated, never authored: reporting them as
         # orphans punishes anyone who smoke-tested a script inside the skill.
         if "__pycache__" in Path(rel).parts or path.suffix.lower() in {".pyc", ".pyo"}:
+            continue
+        # Repository housekeeping (`.gitignore` and friends). It describes the
+        # repo the skill is kept in, not the skill itself, and no prose points at
+        # it — the same reasoning that already exempts `.git/`.
+        if Path(rel).name in REPO_CHROME_FILES:
             continue
         # A validator/checker script plays the role of tooling, not content: it is
         # invoked by the workflow rather than pointed at from prose, so "no entry
