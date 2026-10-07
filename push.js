@@ -25,7 +25,16 @@ async function main() {
 
     // Push
     console.log("\x1b[36mPushing to GitHub...\x1b[0m");
-    runGit(["push"], { stdio: "inherit" });
+    const upstream = spawnSync(
+      "git",
+      ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"],
+      { encoding: "utf8" },
+    );
+    const pushArgs =
+      upstream.status === 0
+        ? ["push"]
+        : ["push", "--set-upstream", "origin", "HEAD"];
+    runGit(pushArgs, { stdio: "inherit" });
 
     console.log("\x1b[32mSuccessfully pushed to GitHub!\x1b[0m");
 
